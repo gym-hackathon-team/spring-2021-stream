@@ -1,0 +1,77 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.js"></script>
+<div class="contentarea">
+    <div class="camera">
+        <video id="video" autoplay>Video stream not available.</video>
+        <br>
+        <button id="control">Start stream</button>
+    </div>
+</div>
+
+<script>
+    const path = window.location.pathname;
+    let id = '';
+    if (path[path.length - 1] === '/') {
+        const beforeLast = path.lastIndexOf('/', path.length - 2)
+        id = path.slice(beforeLast + 1, path.length - 1)
+    } else {
+        const beforeLast = path.lastIndexOf('/')
+        id = path.slice(beforeLast + 1, path.lengthz)
+    }
+
+    const socket = io();
+
+    const video = document.getElementById('video');
+    const controlButton = document.getElementById('control');
+
+    let streaming = false;
+
+    let stream = null;
+    let mediaRecorder = null;
+    let startStream = () => {
+        if (mediaRecorder == null) {
+            socket.emit('start', id);
+            socket.once('started', () => {
+                controlButton.innerText = 'Stop stream';
+
+                mediaRecorder = new MediaRecorder(stream, {mimeType: "video/webm"});
+                mediaRecorder.start(300);
+                mediaRecorder.ondataavailable = function (e) {
+                    if (e.data.size > 0) {
+                        socket.emit('package', e.data);
+                    }
+                }
+            });
+        }
+    };
+    let stopStream = () => {
+        if (mediaRecorder != null) {
+            mediaRecorder.stop();
+            mediaRecorder = null;
+            socket.emit('stop');
+            socket.once('stopped', () => {
+                controlButton.innerText = 'Start stream';
+            });
+        }
+    };
+
+    controlButton.addEventListener('click', () => {
+        if (controlButton.innerText === 'Start stream') {
+            if (stream == null) {
+                navigator.mediaDevices.getUserMedia({video: true, audio: true})
+                    .then(function (cameraStream) {
+                        stream = cameraStream;
+                        video.srcObject = stream;
+                        startStream();
+                    })
+                    .catch(function (err) {
+                        console.log("An error occurred: " + err);
+                    });
+            } else {
+                startStream();
+            }
+        } else {
+            stopStream();
+        }
+    });
+
+</script>

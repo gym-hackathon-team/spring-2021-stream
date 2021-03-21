@@ -1,0 +1,23 @@
+<div class="camera">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <video id="video" autoplay></video>
+    <script>
+        const path = window.location.pathname;
+        let id = '';
+        if (path[path.length - 1] === '/') {
+            const beforeLast = path.lastIndexOf('/', path.length - 2)
+            id = path.slice(beforeLast + 1, path.length - 1)
+        } else {
+            const beforeLast = path.lastIndexOf('/')
+            id = path.slice(beforeLast + 1, path.lengthz)
+        }
+
+        const video = document.getElementById('video');
+        const videoSrc = 'http://' + window.location.host + '/' + id + '/index.m3u8';
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+        }
+    </script>
+</div>
